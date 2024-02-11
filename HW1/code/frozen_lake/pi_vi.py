@@ -461,7 +461,25 @@ def value_func_heatmap(env, value_func):
 
     plt.show()
 
+def run(agent, env, max_steps):
+    observation, info = env.reset()
+    episode_observations, episode_actions, episode_rewards = [], [], []
 
+    for _ in range(max_steps):
+        action = agent[observation]
+
+        next_observation, reward, terminated, truncated, info = env.step(action)
+
+        episode_observations.append(observation)
+        episode_actions.append(action)
+        episode_rewards.append(reward)
+
+        observation = next_observation
+
+        if terminated:
+            break
+
+    return(episode_observations, episode_actions, episode_rewards)
 
 if __name__ == '__main__':
     np.random.seed(10003)
@@ -469,10 +487,13 @@ if __name__ == '__main__':
     gamma = 0.9
 
     for map_name, map in maps.items():
-        env = gymnasium.make('FrozenLake-v1', desc=map, map_name=map_name, is_slippery=False)
+        env = gymnasium.make('FrozenLake-v1', desc=map, map_name=map_name, is_slippery=False, render_mode='human')
         # BEGIN STUDENT SOLUTION
         # do policy iteration sync
         p, v, i1, i2 = policy_iteration_sync(env, gamma)
-        print(p)
+        run(p, env, 20)
+        # display policy
+        #print(display_policy_letters(env, p))
+        #print(p)
 
         # END STUDENT SOLUTION
