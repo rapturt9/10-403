@@ -171,6 +171,15 @@ def improve_policy(env, gamma, value_func, policy):
     '''
     policy_changed = False
     # BEGIN STUDENT SOLUTION
+    for s in range(len(value_func)):
+        old_action = policy[s]
+        action_rewards = {}
+        for a in range(env.action_space.n):
+            r_array = env.unwrapped.P[s][a]
+            action_rewards[a] = sum([p * (r + gamma * value_func[s_]) for p, s_, r, _ in r_array])
+        policy[s] = max(action_rewards, key=action_rewards.get)
+        if policy[s] != old_action:
+            policy_changed = True
     # END STUDENT SOLUTION
     return(policy, policy_changed)
 
@@ -205,11 +214,9 @@ def policy_iteration_sync(env, gamma, max_iters=int(1e3), tol=1e-3):
     pi_steps, pe_steps = 0, 0
     # BEGIN STUDENT SOLUTION
     changed = True
-    value_func, iterations = evaluate_policy_sync(env, value_func, gamma, policy)
-    print(value_func)
-    #while changed:
-    #    value_func, iterations = evaluate_policy_sync(env, value_func, gamma, policy)
-    #    policy, changed = improve_policy(env, gamma, value_func, policy)
+    while changed:
+        value_func, iterations = evaluate_policy_sync(env, value_func, gamma, policy)
+        policy, changed = improve_policy(env, gamma, value_func, policy)
     # END STUDENT SOLUTION
     return(policy, value_func, pi_steps, pe_steps)
 
