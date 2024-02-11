@@ -61,6 +61,17 @@ def evaluate_policy_sync(env, value_func, gamma, policy, max_iters=int(1e3), tol
         function took to converge.
     '''
     # BEGIN STUDENT SOLUTION
+    delta = 1
+    i = 0
+    while delta > tol:
+        delta = 0
+        for s in range(env.observation_space.n):
+            v = value_func[s]
+            a = policy[s]
+            r_array = env.unwrapped.P[s][a]
+            value_func[s] = sum([p * (r + gamma * value_func[s_]) for p, s_, r, _ in r_array])
+            delta = max(delta, abs(v - value_func[s]))
+        i += 1
     # END STUDENT SOLUTION
     return(value_func, i)
 
@@ -95,6 +106,7 @@ def evaluate_policy_async_ordered(env, value_func, gamma, policy, max_iters=int(
         function took to converge.
     '''
     # BEGIN STUDENT SOLUTION
+    i = 0
     # END STUDENT SOLUTION
     return(value_func, i)
 
@@ -129,6 +141,7 @@ def evaluate_policy_async_randperm(env, value_func, gamma, policy, max_iters=int
         function took to converge.
     '''
     # BEGIN STUDENT SOLUTION
+    i = 0
     # END STUDENT SOLUTION
     return(value_func, i)
 
@@ -192,9 +205,11 @@ def policy_iteration_sync(env, gamma, max_iters=int(1e3), tol=1e-3):
     pi_steps, pe_steps = 0, 0
     # BEGIN STUDENT SOLUTION
     changed = True
-    while changed:
-        value_func, iterations = evaluate_policy_sync(env, value_func, gamma, policy)
-        policy, changed = improve_policy(env, gamma, value_func, policy)
+    value_func, iterations = evaluate_policy_sync(env, value_func, gamma, policy)
+    print(value_func)
+    #while changed:
+    #    value_func, iterations = evaluate_policy_sync(env, value_func, gamma, policy)
+    #    policy, changed = improve_policy(env, gamma, value_func, policy)
     # END STUDENT SOLUTION
     return(policy, value_func, pi_steps, pe_steps)
 
@@ -289,6 +304,7 @@ def value_iteration_sync(env, gamma, max_iters=int(1e3), tol=1e-3):
     '''
     value_func = np.zeros(env.observation_space.n)
     # BEGIN STUDENT SOLUTION
+    i = 0
     # END STUDENT SOLUTION
     return(value_func, i)
 
@@ -318,6 +334,7 @@ def value_iteration_async_ordered(env, gamma, max_iters=int(1e3), tol=1e-3):
     '''
     value_func = np.zeros(env.observation_space.n)
     # BEGIN STUDENT SOLUTION
+    i = 0
     # END STUDENT SOLUTION
     return(value_func, i)
 
@@ -347,6 +364,7 @@ def value_iteration_async_randperm(env, gamma, max_iters=int(1e3), tol=1e-3):
     '''
     value_func = np.zeros(env.observation_space.n)
     # BEGIN STUDENT SOLUTION
+    i = 0
     # END STUDENT SOLUTION
     return(value_func, i)
 
@@ -376,6 +394,7 @@ def value_iteration_async_custom(env, gamma, max_iters=int(1e3), tol=1e-3):
     '''
     value_func = np.zeros(env.observation_space.n)
     # BEGIN STUDENT SOLUTION
+    i = 0
     # END STUDENT SOLUTION
     return(value_func, i)
 
@@ -445,4 +464,8 @@ if __name__ == '__main__':
     for map_name, map in maps.items():
         env = gymnasium.make('FrozenLake-v1', desc=map, map_name=map_name, is_slippery=False)
         # BEGIN STUDENT SOLUTION
+        # do policy iteration sync
+        p, v, i1, i2 = policy_iteration_sync(env, gamma)
+        print(p)
+
         # END STUDENT SOLUTION
