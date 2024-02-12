@@ -499,7 +499,6 @@ def value_iteration_async_custom(env, gamma, max_iters=int(1e3), tol=1e-3):
     # BEGIN STUDENT SOLUTION
     delta = 1
     i = 0
-    #create state ordering using manhattan distance to goal
     state_order = np.zeros(env.observation_space.n, dtype='int')
     #get goal state
     goal = np.unravel_index(env.unwrapped.desc.ravel().argmax(), env.unwrapped.desc.shape)
@@ -507,7 +506,6 @@ def value_iteration_async_custom(env, gamma, max_iters=int(1e3), tol=1e-3):
         state = np.unravel_index(s, env.unwrapped.desc.shape)
         state_order[s] = abs(goal[0] - state[0]) + abs(goal[1] - state[1])
     state_order = np.argsort(state_order)
-    print(state_order)
     # reverse state order
     state_order = state_order[::-1]
 
@@ -630,14 +628,9 @@ if __name__ == '__main__':
         # BEGIN STUDENT SOLUTION
         # do policy iteration sync
         #p, v, pi, pe = policy_iteration_async_ordered(env, gamma)
-        #print(pi, pe)
         v, i = value_iteration_async_custom(env, gamma)
         p = value_func_to_policy(env, gamma, v)
         #run(p, env, 20)
-        print(i)
         #policy = np.zeros(env.observation_space.n, dtype='int')
-        # display policy
-        #print(display_policy_letters(env, p))
         #value_func_heatmap(env, v)
-        #print(p)
         # END STUDENT SOLUTION
