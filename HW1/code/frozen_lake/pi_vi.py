@@ -30,6 +30,12 @@ def value_func_to_policy(env, gamma, value_func):
     '''
     policy = np.zeros(env.observation_space.n, dtype='int')
     # BEGIN STUDENT SOLUTION
+    for s in range(len(value_func)):
+        action_rewards = {}
+        for a in range(env.action_space.n):
+            r_array = env.unwrapped.P[s][a]
+            action_rewards[a] = sum([p * (value_func[s_]+r) for p, s_, r, _ in r_array])
+        policy[s] = max(action_rewards, key=action_rewards.get)
     # END STUDENT SOLUTION
     return(policy)
 
@@ -106,7 +112,19 @@ def evaluate_policy_async_ordered(env, value_func, gamma, policy, max_iters=int(
         function took to converge.
     '''
     # BEGIN STUDENT SOLUTION
+    delta = 1
     i = 0
+    while (delta > tol and i < max_iters):
+        new_vf = np.zeros_like(value_func)
+        delta = 0
+        for s in range(env.observation_space.n):
+            v = value_func[s]
+            a = policy[s]
+            r_array = env.P[s][a]
+            new_vf[s] = sum([p * (r + gamma * value_func[s_]) for p, s_, r, _ in r_array])
+            delta = max(delta, abs(v - new_vf[s]))
+        i += 1
+        value_func = new_vf
     # END STUDENT SOLUTION
     return(value_func, i)
 
@@ -141,7 +159,19 @@ def evaluate_policy_async_randperm(env, value_func, gamma, policy, max_iters=int
         function took to converge.
     '''
     # BEGIN STUDENT SOLUTION
+    delta = 1
     i = 0
+    while (delta > tol and i < max_iters):
+        new_vf = np.zeros_like(value_func)
+        delta = 0
+        for s in np.random.permutation(env.observation_space.n):
+            v = value_func[s]
+            a = policy[s]
+            r_array = env.P[s][a]
+            new_vf[s] = sum([p * (r + gamma * value_func[s_]) for p, s_, r, _ in r_array])
+            delta = max(delta, abs(v - new_vf[s]))
+        i += 1
+        value_func = new_vf
     # END STUDENT SOLUTION
     return(value_func, i)
 
@@ -216,7 +246,9 @@ def policy_iteration_sync(env, gamma, max_iters=int(1e3), tol=1e-3):
     changed = True
     while changed:
         value_func, iterations = evaluate_policy_sync(env, value_func, gamma, policy)
+        pe_steps += iterations
         policy, changed = improve_policy(env, gamma, value_func, policy)
+        pi_steps += 1
     # END STUDENT SOLUTION
     return(policy, value_func, pi_steps, pe_steps)
 
@@ -250,9 +282,16 @@ def policy_iteration_async_ordered(env, gamma, max_iters=int(1e3), tol=1e-3):
     value_func = np.zeros(env.observation_space.n)
     pi_steps, pe_steps = 0, 0
     # BEGIN STUDENT SOLUTION
+    changed = True
+    while (changed):
+        value_func, iters = evaluate_policy_async_ordered(env, value_func, gamma, policy)
+        policy, changed = improve_policy(env, gamma, value_func, policy)
+        pi_steps += 1
+        pe_steps += iters
+        if(pi_steps >= max_iters):
+            break
     # END STUDENT SOLUTION
     return(policy, value_func, pi_steps, pe_steps)
-
 
 
 def policy_iteration_async_randperm(env, gamma, max_iters=int(1e3), tol=1e-3):
@@ -283,6 +322,14 @@ def policy_iteration_async_randperm(env, gamma, max_iters=int(1e3), tol=1e-3):
     value_func = np.zeros(env.observation_space.n)
     pi_steps, pe_steps = 0, 0
     # BEGIN STUDENT SOLUTION
+    changed = True
+    while (changed):
+        value_func, iters = evaluate_policy_async_randperm(env, value_func, gamma, policy)
+        policy, changed = improve_policy(env, gamma, value_func, policy)
+        pi_steps += 1
+        pe_steps += iters
+        if(pi_steps >= max_iters):
+            break
     # END STUDENT SOLUTION
     return(policy, value_func, pi_steps, pe_steps)
 
@@ -312,6 +359,29 @@ def value_iteration_sync(env, gamma, max_iters=int(1e3), tol=1e-3):
     value_func = np.zeros(env.observation_space.n)
     # BEGIN STUDENT SOLUTION
     i = 0
+    delta = 1
+    while i < max_iters and delta > tol:
+        delta = 0
+        for s in range(env.observation_space.n):
+            if value_func[s] > 0:
+                continue
+            v = value_func[s]
+            action_rewards = []
+            for a in range(env.action_space.n):
+                r_array = env.unwrapped.P[s][a]
+                action_reward = 0
+                for p, s_, r, done in r_array:
+                    if done:
+                        if r > 0:
+                            value_func[s_] = r
+                        action_reward = max(action_reward, r)  # Max reward if terminal state
+                    else:
+                        action_reward = max(action_reward, p * (r + gamma * value_func[s_]))
+                action_rewards.append(action_reward)
+            max_action_reward = max(action_rewards)
+            value_func[s] = max_action_reward
+            delta = max(delta, abs(v - value_func[s]))
+        i += 1
     # END STUDENT SOLUTION
     return(value_func, i)
 
@@ -341,7 +411,20 @@ def value_iteration_async_ordered(env, gamma, max_iters=int(1e3), tol=1e-3):
     '''
     value_func = np.zeros(env.observation_space.n)
     # BEGIN STUDENT SOLUTION
+    delta = 1
     i = 0
+    while (delta >= tol and i < max_iters):
+        delta = 0
+        for s in range(env.observation_space.n):
+            v = value_func[s]
+            action_space = np.zeros(env.action_space.n)
+            for a in range(env.action_space.n):
+                r_array = env.P[s][a]
+                action_space[a] = sum([p * (r + gamma * value_func[s_]) for p, s_, r, _ in r_array])
+            value_func[s] = max(action_space)
+            delta = max(delta, abs(v - value_func[s]))
+        i += 1
+        value_func = value_func
     # END STUDENT SOLUTION
     return(value_func, i)
 
@@ -371,7 +454,20 @@ def value_iteration_async_randperm(env, gamma, max_iters=int(1e3), tol=1e-3):
     '''
     value_func = np.zeros(env.observation_space.n)
     # BEGIN STUDENT SOLUTION
+    delta = 1
     i = 0
+    while (delta >= tol and i < max_iters):
+        delta = 0
+        for s in np.random.permutation(env.observation_space.n):
+            v = value_func[s]
+            action_space = np.zeros(env.action_space.n)
+            for a in range(env.action_space.n):
+                r_array = env.P[s][a]
+                action_space[a] = sum([p * (r + gamma * value_func[s_]) for p, s_, r, _ in r_array])
+            value_func[s] = max(action_space)
+            delta = max(delta, abs(v - value_func[s]))
+        i += 1
+        value_func = value_func
     # END STUDENT SOLUTION
     return(value_func, i)
 
@@ -401,9 +497,53 @@ def value_iteration_async_custom(env, gamma, max_iters=int(1e3), tol=1e-3):
     '''
     value_func = np.zeros(env.observation_space.n)
     # BEGIN STUDENT SOLUTION
+    delta = 1
     i = 0
+    #create state ordering using manhattan distance to goal
+    state_order = np.zeros(env.observation_space.n, dtype='int')
+    #get goal state
+    goal = np.unravel_index(env.unwrapped.desc.ravel().argmax(), env.unwrapped.desc.shape)
+    for s in range(env.observation_space.n):
+        state = np.unravel_index(s, env.unwrapped.desc.shape)
+        state_order[s] = abs(goal[0] - state[0]) + abs(goal[1] - state[1])
+    state_order = np.argsort(state_order)
+    print(state_order)
+    # reverse state order
+    state_order = state_order[::-1]
+
+    while (delta >= tol and i < max_iters):
+        delta = 0
+        for s in state_order:
+            v = value_func[s]
+            action_space = np.zeros(env.action_space.n)
+            for a in range(env.action_space.n):
+                r_array = env.P[s][a]
+                action_space[a] = sum([p * (r + gamma * value_func[s_]) for p, s_, r, _ in r_array])
+            value_func[s] = max(action_space)
+            delta = max(delta, abs(v - value_func[s]))
+        i += 1
+        value_func = value_func
     # END STUDENT SOLUTION
     return(value_func, i)
+
+    """value_func = np.zeros(env.observation_space.n)
+    # BEGIN STUDENT SOLUTION
+    delta = 1
+    i = 0
+    state_count = env.observation_space.n - 1
+    while (delta >= tol and i < max_iters):
+        delta = 0
+        new_vf = np.zeros_like(value_func)
+        for s in range(state_count, -1, -1):
+            v = value_func[s]
+            action_space = np.zeros(env.action_space.n)
+            for a in range(env.action_space.n):
+                r_array = env.P[s][a]
+                action_space[a] = sum([p * (r + gamma * value_func[s_]) for p, s_, r, _ in r_array])
+            new_vf[s] = max(action_space)
+            delta = max(delta, abs(v - new_vf[s]))
+    # END STUDENT SOLUTION
+    return(value_func, i)"""
 
 
 
@@ -485,15 +625,19 @@ if __name__ == '__main__':
     np.random.seed(10003)
     maps = lake_info.maps
     gamma = 0.9
-
     for map_name, map in maps.items():
         env = gymnasium.make('FrozenLake-v1', desc=map, map_name=map_name, is_slippery=False, render_mode='human')
         # BEGIN STUDENT SOLUTION
         # do policy iteration sync
-        p, v, i1, i2 = policy_iteration_sync(env, gamma)
-        run(p, env, 20)
+        #p, v, pi, pe = policy_iteration_async_ordered(env, gamma)
+        #print(pi, pe)
+        v, i = value_iteration_async_custom(env, gamma)
+        p = value_func_to_policy(env, gamma, v)
+        #run(p, env, 20)
+        print(i)
+        #policy = np.zeros(env.observation_space.n, dtype='int')
         # display policy
         #print(display_policy_letters(env, p))
+        #value_func_heatmap(env, v)
         #print(p)
-
         # END STUDENT SOLUTION
