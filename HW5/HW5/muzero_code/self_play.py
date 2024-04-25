@@ -33,6 +33,9 @@ def self_play(env, config: MuZeroConfig, replay_buffer: ReplayBuffer, network: C
             train_results.plot_total_loss()
             test_rewards.plot_rewards()
             return
+    train_results.plot_individual_losses()
+    train_results.plot_total_loss()
+    test_rewards.plot_rewards()
 
 
 def play_games(config: MuZeroConfig, replay_buffer: ReplayBuffer, network: CartPoleNetwork, env, games_played):
