@@ -132,10 +132,10 @@ def expand_root(node, actions, network, current_state):
     value, reward, policy_logits, hidden_state = network.initial_inference(input_array)
     node.hidden_representation = hidden_state
     node.reward = value
-    softmax_policy = policy_logits[0]
-    node.policy = softmax_policy
-    for action, prior in enumerate(softmax_policy):
-        node.children[action] = Node(prior)
+    softmax_policy = network._softmax(policy_logits)[0]
+    node.policy = softmax_policy.numpy()
+    for a in actions:
+        node.children[a] = Node(node.policy[a])
     node.expanded = True
     value = node.value()
     return value
@@ -154,10 +154,10 @@ def expand_node(node, actions, network, parent_state, parent_action):
     #print(hidden_state)
     node.hidden_representation = hidden_state
     node.reward = reward
-    softmax_policy = policy_logits[0]
-    node.policy = softmax_policy
-    for action, prior in enumerate(softmax_policy):
-        node.children[action] = Node(prior)
+    softmax_policy = network._softmax(policy_logits)[0]
+    node.policy = softmax_policy.numpy()
+    for a in actions:
+        node.children[a] = Node(node.policy[a])
     node.expanded = True
     value = node.value()
 
