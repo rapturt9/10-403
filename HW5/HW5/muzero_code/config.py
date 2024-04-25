@@ -3,11 +3,18 @@ from typing import Optional
 from mcts import visit_softmax_temperature
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 MAX_FLOAT_VAL = float('inf')
 
 KnownBounds = collections.namedtuple('KnownBounds', ['min', 'max'])
 
+def ensure_directory_exists(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+# Call this function before plotting
+ensure_directory_exists('plots/')
 
 class TrainResults(object):
 
@@ -22,6 +29,7 @@ class TrainResults(object):
         plt.plot(x_vals, self.total_losses, label="Train Loss")
         plt.xlabel("Train Steps")
         plt.ylabel("Loss")
+        plt.savefig("plots/total_loss.png")
         plt.show()
 
     def plot_individual_losses(self):
@@ -32,6 +40,7 @@ class TrainResults(object):
         plt.xlabel("Train Steps")
         plt.ylabel("Losses")
         plt.legend()
+        plt.savefig("plots/indiv_loss.png")
         plt.show()
 
     def plot_policy_loss(self):
@@ -40,6 +49,7 @@ class TrainResults(object):
         plt.xlabel("Train Steps")
         plt.ylabel("Losses")
         plt.legend()
+        plt.savefig("plots/policy_loss.png")
         plt.show()
 
 
@@ -62,6 +72,7 @@ class TestResults(object):
         plt.plot(x_vals, self.test_rewards, label="Test Reward")
         plt.xlabel("Test Episodes")
         plt.ylabel("Reward")
+        plt.savefig("plots/reward_loss.png")
         plt.show()
 
 
